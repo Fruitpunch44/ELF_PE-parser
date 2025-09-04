@@ -1,18 +1,6 @@
-#include<elf.h>
-#include<stdio.h>
-#include<string.h>
+#include"my_elf.h"
 
-
-//check the system type if it's 64 bit
-//if not use 32 bit
-
-#if defined(__LP64__)
-#define ElfW(type) Elf64_ ## type
-#else
-#define ElfW(type) Elf32_ ## type
-#endif
-
-void read_elf_headers(const char* elf_file){
+void print_elf_headers(const char* elf_file){
     ElfW(Ehdr) header;
 
     FILE* file=fopen(elf_file,"rb");
@@ -22,9 +10,29 @@ void read_elf_headers(const char* elf_file){
 
         //elf file check
         if(memcmp(header.e_ident,ELFMAG,SELFMAG)==0){
-            printf("%S is a valid elf file",elf_file);
+            printf("%s is a valid elf file",elf_file);
+            printf("ELF ID:%s\n",header.e_ident);
+            printf("section header offset: %d\n",header.e_shoff);
+            printf("entry point: %u",header.e_entry);
+            printf("Elf header_size: %u",header.e_ehsize);
+        }
+        else{
+            printf("%s is not a valid elf file",elf_file);
+            exit(1);
         }
         fclose(file);
     }
 
+}
+
+
+int main(int argc, char* argv[]){
+
+    if(argc<2){
+        printf("pls pass in the required arguments\n");
+        exit(1);
+    }
+    char *file_name=argv[1];
+    print_elf_headers(file_name);
+    return 0;
 }
