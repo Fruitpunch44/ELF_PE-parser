@@ -15,7 +15,9 @@ void print_elf_headers(const char* elf_file){
             printf("section header offset: %d\n",header.e_shoff);
             printf("entry point: %u",header.e_entry);
             printf("Elf header_size: %u",header.e_ehsize);
+
             //add more things
+            //read the docs
         }
         else{
             printf("%s is not a valid elf file",elf_file);
