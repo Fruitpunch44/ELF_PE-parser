@@ -1,5 +1,35 @@
 #include"my_elf.h"
 
+void parse_section_table(const char* elf_file){
+    ElfW(Ehdr) header;
+    const char *Section_names;
+    FILE *file=fopen(elf_file,"rb");
+    if(!file){
+        perror("an error occured reading the file");
+        exit(1);
+    }
+    else{
+        fread(&header,sizeof(header),1,file);
+        fseek(file,header.e_shoff+header.e_shstrndx*header.e_shentsize,SEEK_SET);
+        ElfW(Shdr) section_headers;
+
+        char *section_names=malloc(section_headers.sh_size);
+        fseek(file,section_headers.sh_offset,SEEK_SET);
+        fread(section_names,section_headers.sh_size,1,file);
+
+        for(int idx =0; idx < header.e_shnum;++idx){
+            char *name= " ";
+            fseek(file,header.e_shoff+idx*sizeof(section_headers),SEEK_SET);
+            fread(&section_headers,1,sizeof(section_headers),file);
+
+            if(section_headers.sh_name);
+            name=section_names+section_headers.sh_name;
+            
+            printf("%i %s",idx,name);
+
+        }
+    }
+}
 
 void parse_text_section(const char* elf_file){
     ElfW(Ehdr) header;
@@ -36,7 +66,7 @@ void parse_text_section(const char* elf_file){
                fread(text,shdrs[i].sh_size,1,file);
 
                 for (ssize_t j=0;j<shdrs[i].sh_size;j++){
-                    printf("03x",text[j]);
+                    printf("02x",text[j]);
                     if ((i+1) % 16 ==0){
                         printf(" ");
                     }
@@ -48,9 +78,6 @@ void parse_text_section(const char* elf_file){
 
 void print_elf_headers(const char* elf_file){
     ElfW(Ehdr) header;
-    
-    
-
     FILE* file=fopen(elf_file,"rb");
     if(!file){
         perror("unable to read file");
