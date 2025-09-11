@@ -32,7 +32,7 @@ void parse_section_table(const char* elf_file){
 
             name=section_names+section_headers.sh_name;
             
-            printf("%i %s",idx,name);
+            printf("%i %s\n",idx,name);
 
         }
     }
