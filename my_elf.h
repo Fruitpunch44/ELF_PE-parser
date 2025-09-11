@@ -16,6 +16,8 @@
 
 
 void print_elf_headers(const char* elf_file);
+void parse_text_section(const char* elf_file);
+void parse_section_table(const char* elf_file);
 
 
 #endif

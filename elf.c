@@ -1,5 +1,7 @@
 #include"my_elf.h"
 
+
+
 void parse_section_table(const char* elf_file){
     ElfW(Ehdr) header;
     const char *Section_names;
@@ -9,26 +11,32 @@ void parse_section_table(const char* elf_file){
         exit(1);
     }
     else{
+        //read elf header first
         fread(&header,sizeof(header),1,file);
+        //move to the section header string table
         fseek(file,header.e_shoff+header.e_shstrndx*header.e_shentsize,SEEK_SET);
+
+        //read section headers
         ElfW(Shdr) section_headers;
+        fread(&section_headers, sizeof(section_headers), 1, file);
+
 
         char *section_names=malloc(section_headers.sh_size);
         fseek(file,section_headers.sh_offset,SEEK_SET);
-        fread(section_names,section_headers.sh_size,1,file);
+        fread(section_names,1,section_headers.sh_size,file);
 
         for(int idx =0; idx < header.e_shnum;++idx){
-            char *name= " ";
+            const char *name= "";
             fseek(file,header.e_shoff+idx*sizeof(section_headers),SEEK_SET);
             fread(&section_headers,1,sizeof(section_headers),file);
 
-            if(section_headers.sh_name);
             name=section_names+section_headers.sh_name;
             
             printf("%i %s",idx,name);
 
         }
     }
+    
 }
 
 void parse_text_section(const char* elf_file){
@@ -62,13 +70,18 @@ void parse_text_section(const char* elf_file){
                (unsigned long)shdrs[i].sh_offset,
                (unsigned long)shdrs[i].sh_size);
                fseek(file,shdrs[i].sh_offset,SEEK_SET);
-               unsigned char *text=malloc(shdrs[i].sh_size);
-               fread(text,shdrs[i].sh_size,1,file);
 
+               unsigned char *text=malloc(shdrs[i].sh_size);
+               if(!text){
+                perror("error in allocating memory");
+                exit(1);
+               }
+               fread(text,shdrs[i].sh_size,1,file);
+               printf("Machine Code \n");
                 for (ssize_t j=0;j<shdrs[i].sh_size;j++){
-                    printf("02x",text[j]);
-                    if ((i+1) % 16 ==0){
-                        printf(" ");
+                    printf("%02x ",text[j]);
+                    if ((j+1) % 16 ==0){
+                        printf("\n");
                     }
                 }
             }
@@ -98,7 +111,7 @@ void print_elf_headers(const char* elf_file){
                header.e_ident[2], header.e_ident[3]);
 
             printf("Version:%d\n",header.e_version);
-            print("Machine:%s",header.e_machine);
+            printf("Machine:%u",header.e_machine);
             printf("section header offset: %d\n",header.e_shoff);
             printf("entry point: %#x\n",header.e_entry);
             printf("Elf header_size: %u\n",header.e_ehsize);
@@ -116,15 +129,3 @@ void print_elf_headers(const char* elf_file){
 
 }
 
-
-int main(int argc, char* argv[]){
-
-    if(argc<2){
-        printf("pls pass in the required arguments\n");
-        exit(1);
-    }
-    char *file_name=argv[1];
-    print_elf_headers(file_name);
-    parse_text_section(file_name);
-    return 0;
-}
