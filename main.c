@@ -16,11 +16,14 @@ int main(int argc, char* argv[]){
     */
 
     int option;
-    if(argc<2){
+    if(argc<3){
         printf("pls pass in the required arguments\n");
         exit(1);
     }
-    char *file_name=argv[1];
+    char *file_name=argv[2];
+
+    //parse command line args,man i miss python wtf is this
+    //LINUX specific
     while((option = getopt(argc,argv,"PTSA"))!=1){
         switch(option){
 
@@ -43,7 +46,7 @@ int main(int argc, char* argv[]){
             break;
 
             default:
-            fprintf("usage : %s [-PTS] [FILE]",argv[0]);
+            fprintf(stderr,"usage : %s [-PTS] [FILE]",argv[0]);
             exit(EXIT_FAILURE);
         }
   

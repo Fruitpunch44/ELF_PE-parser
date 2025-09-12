@@ -1,8 +1,70 @@
 #include"my_elf.h"
 
+const char *elf_machine_name(uint16_t machine_num) {
+    switch (machine_num) {
+    case EM_386:
+        return "Intel 386";
+    case EM_X86_64:
+        return "AMD x86-64";
+    case EM_ARM:
+        return "ARM";
+    case EM_RISCV:
+        return "RISC-V";
+    default:
+        return "Unknown machine type";
+    }
+}
+
+const char *elf_file_type(uint16_t elf_type) {
+    switch (elf_type) {
+    case ET_NONE:
+        return "No file type";
+    case ET_REL:
+        return "Relocatable file";
+    case ET_EXEC:
+        return "Executable file";
+    case ET_DYN:
+        return "Shared object file";
+    case ET_CORE:
+        return "Core file";
+    default:
+        return "Invalid file type";
+    }
+}
+
+const char *elf_version_name(uint16_t version) {
+    switch (version) {
+    case EV_NONE:
+        return "Invalid version";
+    case EV_CURRENT:
+        return "Current version";
+    default:
+        return "Unknown version";
+    }
+}
+
+void parse_system_table(const char *elf_file){
+    ElfW(Ehdr) headers;
+
+    const char *sys_table_contents;
+
+    FILE *file=fopen(elf_file,"rb");
+    if(!file){
+        perror("an error occured while trying to open the file");
+        exit(EXIT_FAILURE);
+    }
+    else{
+        fread(&headers,sizeof(headers),1,file);
+        fseek(file,headers.e_shoff,SEEK_SET);
+
+        //read all section headers
+        ElfW(Shdr) *shdrs = malloc(headers.e_shnum * sizeof(ElfW(Shdr)));
+        fread(shdrs, sizeof(ElfW(Shdr)), headers.e_shnum, file);
 
 
-void parse_section_table(const char* elf_file){
+        }
+}
+void parse_section_table(const char *elf_file){
     ElfW(Ehdr) header;
     const char *Section_names;
     FILE *file=fopen(elf_file,"rb");
@@ -52,6 +114,7 @@ void parse_text_section(const char* elf_file){
         fread(&header,sizeof(header),1,file);
         fseek(file,header.e_shoff,SEEK_SET);
 
+        //read all section headers
         ElfW(Shdr) *shdrs = malloc(header.e_shnum * sizeof(ElfW(Shdr)));
         fread(shdrs, sizeof(ElfW(Shdr)), header.e_shnum, file);
 
@@ -91,6 +154,7 @@ void parse_text_section(const char* elf_file){
 
 void print_elf_headers(const char* elf_file){
     ElfW(Ehdr) header;
+    
     FILE* file=fopen(elf_file,"rb");
     if(!file){
         perror("unable to read file");
@@ -104,18 +168,20 @@ void print_elf_headers(const char* elf_file){
 
         //elf file check
         if(memcmp(header.e_ident,ELFMAG,SELFMAG)==0){
-            printf("%s is a valid elf file",elf_file);
+            printf("%s is a valid elf file\n",elf_file);
             
             printf("ELF Magic: %02x %02x %02x %02x\n",
                header.e_ident[0], header.e_ident[1],
                header.e_ident[2], header.e_ident[3]);
 
-            printf("Version:%d\n",header.e_version);
-            printf("Machine:%u",header.e_machine);
-            printf("section header offset: %d\n",header.e_shoff);
-            printf("entry point: %#x\n",header.e_entry);
-            printf("Elf header_size: %u\n",header.e_ehsize);
 
+            printf("Version:%s\n",version_type(header.e_version));
+            printf("Machine:%s\n",machine_name(header.e_machine));
+            printf("Type:%s\n",Elf_ver_type(header.e_type));
+            printf("Section header offset: %d\n",header.e_shoff);
+            printf("Entry point: %#x\n",header.e_entry);
+            printf("Elf header_size: %u\n",header.e_ehsize);
+        
 
             //add more things
             //read the docs
@@ -129,3 +195,13 @@ void print_elf_headers(const char* elf_file){
 
 }
 
+int main(int argc,char *argv []){
+    if(argc<2){
+        fprintf(stderr,"please pass in the right number of args");
+        exit(EXIT_FAILURE);
+    }
+    const char *file_name=argv[1];
+    print_elf_headers(file_name);
+    return 0;
+
+}
