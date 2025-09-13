@@ -18,6 +18,13 @@
 void print_elf_headers(const char* elf_file);
 void parse_text_section(const char* elf_file);
 void parse_section_table(const char* elf_file);
+const char *elf_machine_name(uint16_t machine_num);
+const char *elf_osabi_name(uint8_t osabi);
+const char *elf_class(uint8_t elf_class);
+const char *elf_data_format(uint16_t elf_data);
+const char *elf_file_type(uint16_t elf_type);
+const char *elf_version_name(uint16_t version);
+
 
 
 #endif
