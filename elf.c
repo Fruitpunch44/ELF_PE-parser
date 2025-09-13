@@ -87,6 +87,7 @@ void parse_section_table(const char *elf_file){
             perror("failed to read ELF header");
             exit(EXIT_FAILURE);
         }
+
         //move to the section header string table
         fseek(file,header.e_shoff+header.e_shstrndx*header.e_shentsize,SEEK_SET);
 
@@ -227,16 +228,5 @@ void print_elf_headers(const char* elf_file){
         }
         fclose(file);
     }
-
-}
-
-int main(int argc,char *argv []){
-    if(argc<2){
-        fprintf(stderr,"please pass in the right number of args [program] [elf file]\n");
-        exit(EXIT_FAILURE);
-    }
-    const char *file_name=argv[1];
-    print_elf_headers(file_name);
-    return 0;
 
 }
