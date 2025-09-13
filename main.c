@@ -33,6 +33,7 @@ int main(int argc, char* argv[]){
             case 'T': 
                 parse_text_section(file_name);
                 break;
+            
 
             case 'S':
                 parse_section_table(file_name);
