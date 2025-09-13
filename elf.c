@@ -32,7 +32,7 @@ const char *elf_osabi_name(uint8_t osabi) {
 }
 
 /* Return ELF class (32/64-bit) */
-const char *elf_class(uint16_t elf_class) {
+const char *elf_class(uint8_t elf_class) {
     switch (elf_class) {
         case ELFCLASS32:   return "ELF32";
         case ELFCLASS64:   return "ELF64";
@@ -83,7 +83,10 @@ void parse_section_table(const char *elf_file){
     }
     else{
         //read elf header first
-        fread(&header,sizeof(header),1,file);
+        if (fread(&header, sizeof(header), 1, file) != 1) {
+            perror("failed to read ELF header");
+            exit(EXIT_FAILURE);
+        }
         //move to the section header string table
         fseek(file,header.e_shoff+header.e_shstrndx*header.e_shentsize,SEEK_SET);
 
@@ -93,6 +96,10 @@ void parse_section_table(const char *elf_file){
 
 
         Section_names=malloc(section_headers.sh_size);
+        if(!Section_names){
+            perror("unable to allocate memory");
+            exit(EXIT_FAILURE);
+        }
         fseek(file,section_headers.sh_offset,SEEK_SET);
         fread(Section_names,section_headers.sh_size,1,file);
 
@@ -121,17 +128,28 @@ void parse_text_section(const char* elf_file){
     }
     if(file){
         //read header first
-        fread(&header,sizeof(header),1,file);
+        if (fread(&header, sizeof(header), 1, file) != 1) {
+            perror("failed to read ELF header");
+            exit(EXIT_FAILURE);
+        }
         fseek(file,header.e_shoff,SEEK_SET);
 
         //read all section headers
         ElfW(Shdr) *shdrs = malloc(header.e_shnum * sizeof(ElfW(Shdr)));
+        if(!shdrs){
+            perror("unable to allocate memory");
+            exit(EXIT_FAILURE);
+        }
         fread(shdrs, sizeof(ElfW(Shdr)), header.e_shnum, file);
 
 
         ElfW(Shdr) shstr = shdrs[header.e_shstrndx];
         fseek(file, shstr.sh_offset, SEEK_SET);
         char *shstrtab =malloc(shstr.sh_size);
+        if(!shstrtab){
+            perror("unable to allocate memory");
+            exit(EXIT_FAILURE);
+        }
         fread(shstrtab, shstr.sh_size, 1, file);
 
     
@@ -177,7 +195,10 @@ void print_elf_headers(const char* elf_file){
 
     if(file){
         //read header
-        fread(&header,sizeof(header),1,file);
+        if (fread(&header, sizeof(header), 1, file) != 1) {
+            perror("failed to read ELF header");
+            exit(EXIT_FAILURE);
+        }
         
 
         //elf file check
@@ -185,23 +206,20 @@ void print_elf_headers(const char* elf_file){
             printf("%s is a valid elf file\n",elf_file);
             
             printf("ELF Magic: %02x %02x %02x %02x\n",
-               header.e_ident[0], header.e_ident[1],
-               header.e_ident[2], header.e_ident[3]);
-            printf("Class: %s\n",elf_class(header.e_ident[4]));
-            printf("Data: %s\n",elf_data_format(header.e_ident[5]));
-            printf("OS/ABI: %s\n",elf_osabi_name(header.e_ident[7]));
+               header.e_ident[EI_MAG0], header.e_ident[EI_MAG1],
+               header.e_ident[EI_MAG2], header.e_ident[EI_MAG3]);
+            printf("Class: %s\n",elf_class(header.e_ident[EI_CLASS]));
+            printf("Data: %s\n",elf_data_format(header.e_ident[EI_DATA]));
+            printf("OS/ABI: %s\n",elf_osabi_name(header.e_ident[EI_OSABI]));
             printf("Version: %s\n",elf_version_name(header.e_version));
             printf("Machine: %s\n",elf_machine_name(header.e_machine));
             printf("Type: %s\n",elf_file_type(header.e_type));
             printf("Start of section headers: %d\n",header.e_shoff);
             printf("Entry point: %#x\n",header.e_entry);
             printf("Size of section headers: %u\n",header.e_ehsize);
-            printf("Number of section headers %u\n",header.e_shnum);
+            printf("Number of section headers: %u\n",header.e_shnum);
             printf("Flags: %#lx\n",header.e_flags);
-        
-
-            //add more things
-            //read the docs
+            printf("Section header string table index: %u\n",header.e_shstrndx);
         }
         else{
             printf("%s is not a valid elf file",elf_file);
@@ -214,7 +232,7 @@ void print_elf_headers(const char* elf_file){
 
 int main(int argc,char *argv []){
     if(argc<2){
-        fprintf(stderr,"please pass in the right number of args");
+        fprintf(stderr,"please pass in the right number of args [program] [elf file]\n");
         exit(EXIT_FAILURE);
     }
     const char *file_name=argv[1];
