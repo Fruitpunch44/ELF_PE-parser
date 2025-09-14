@@ -204,23 +204,32 @@ void print_elf_headers(const char* elf_file){
 
         //elf file check
         if(memcmp(header.e_ident,ELFMAG,SELFMAG)==0){
-            printf("%s is a valid elf file\n",elf_file);
-            
-            printf("ELF Magic: %02x %02x %02x %02x\n",
-               header.e_ident[EI_MAG0], header.e_ident[EI_MAG1],
-               header.e_ident[EI_MAG2], header.e_ident[EI_MAG3]);
-            printf("Class: %s\n",elf_class(header.e_ident[EI_CLASS]));
-            printf("Data: %s\n",elf_data_format(header.e_ident[EI_DATA]));
-            printf("OS/ABI: %s\n",elf_osabi_name(header.e_ident[EI_OSABI]));
-            printf("Version: %s\n",elf_version_name(header.e_version));
-            printf("Machine: %s\n",elf_machine_name(header.e_machine));
-            printf("Type: %s\n",elf_file_type(header.e_type));
-            printf("Start of section headers: %d\n",header.e_shoff);
-            printf("Entry point: %#x\n",header.e_entry);
-            printf("Size of section headers: %u\n",header.e_ehsize);
-            printf("Number of section headers: %u\n",header.e_shnum);
-            printf("Flags: %#lx\n",header.e_flags);
-            printf("Section header string table index: %u\n",header.e_shstrndx);
+            printf("%s is a valid ELF file\n", elf_file);
+
+            printf("ELF Magic:   %02x %02x %02x %02x\n",
+                header.e_ident[EI_MAG0], header.e_ident[EI_MAG1],
+                header.e_ident[EI_MAG2], header.e_ident[EI_MAG3]);
+
+            printf("Class:       %s\n", elf_class(header.e_ident[EI_CLASS]));
+            printf("Data:        %s\n", elf_data_format(header.e_ident[EI_DATA]));
+            printf("OS/ABI:      %s\n", elf_osabi_name(header.e_ident[EI_OSABI]));
+            printf("Version:     %s\n", elf_version_name(header.e_version));
+            printf("Machine:     %s\n", elf_machine_name(header.e_machine));
+            printf("Type:        %s\n", elf_file_type(header.e_type));
+
+            printf("Entry point address:            %#lx\n", header.e_entry);
+            printf("Start of program headers:       %lu (bytes into file)\n", header.e_phoff);
+            printf("Start of section headers:       %lu (bytes into file)\n", header.e_shoff);
+
+            printf("Size of this header:            %u (bytes)\n", header.e_ehsize);
+            printf("Size of program headers:        %u (bytes)\n", header.e_phentsize);
+            printf("Number of program headers:      %u\n", header.e_phnum);
+            printf("Size of section headers:        %u (bytes)\n", header.e_shentsize);
+            printf("Number of section headers:      %u\n", header.e_shnum);
+
+            printf("Flags:                          %#x\n", header.e_flags);
+            printf("Section header string table index: %u\n", header.e_shstrndx);
+
         }
         else{
             printf("%s is not a valid elf file",elf_file);
