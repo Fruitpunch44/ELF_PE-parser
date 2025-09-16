@@ -95,7 +95,7 @@ const char *elf_version_name(uint16_t version) {
 
 /*parse Symbol tabel helper func*/
 void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *string_table){
-       // Number of symbols
+    // Number of symbols
     int num_syms = section_headers->sh_size / sizeof(ElfW(Sym));
 
     // Allocate space for symbols
@@ -144,12 +144,13 @@ void parse_secton_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr)*string
         for(int idx =0; idx < header->e_shnum;++idx){
             const char *name= "";
             fseek(file,header->e_shoff+idx*sizeof(section_headers),SEEK_SET);
-            fread(&section_headers,sizeof(section_headers),1,file);
+            fread(&section_headers,sizeof(ElfW(Shdr)),1,file);
 
             name=Section_names+section_headers->sh_name;
             
             printf("%i %s\n",idx,name);
         }
+        free(Section_names);
 }
 
 /*return both the symbol and sections names*/
@@ -178,10 +179,6 @@ void parse_symbol_and_sections_table(const char *elf_file) {
 
     // load section header string table
     ElfW(Shdr) *string_table = &section_headers[header.e_shstrndx];
-    char *Section_names = malloc(string_table->sh_size);
-    fseek(file, string_table->sh_offset, SEEK_SET);
-    fread(Section_names, string_table->sh_size, 1, file);
-    
     //parse section names;
     parse_secton_table(file,section_headers,string_table,&header);
 
@@ -197,7 +194,6 @@ void parse_symbol_and_sections_table(const char *elf_file) {
     }
 
     free(section_headers);
-    free(Section_names);
     fclose(file);
 }
 
