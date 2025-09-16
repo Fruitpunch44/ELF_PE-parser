@@ -36,12 +36,12 @@ int main(int argc, char* argv[]){
             
 
             case 'S':
-                parse_section_table(file_name);
+                parse_symbol_and_sections_table(file_name);
                 break;
 
             case 'A':
                 print_elf_headers(file_name);
-                parse_section_table(file_name);
+                parse_symbol_and_sections_table(file_name);
                 parse_text_section(file_name);
                 break;
         }

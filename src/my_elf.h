@@ -24,6 +24,8 @@ const char *elf_class(uint8_t elf_class);
 const char *elf_data_format(uint16_t elf_data);
 const char *elf_file_type(uint16_t elf_type);
 const char *elf_version_name(uint16_t version);
+const char *elf_bind_type(uint16_t bind_type);
+const char *elf_sym_type(uint16_t sym_type);
 
 
 
