@@ -123,7 +123,13 @@ void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *strin
     // Print symbols
     for (int i = 0; i < num_syms; i++) {
         if (symbols[i].st_name != 0) {
-            printf("%d: %s\n", i, strtab + symbols[i].st_name);
+            fprintf(stdout,"NUM: %d  Value: %8x  Size: %lu  Type: %s  Bind: %s  NDX:  %lu  Name:%s \n",
+            i,
+            symbols[i].st_value,
+            symbols[i].st_size,
+            elf_sym_type(symbols[i].st_info),
+            elf_bind_type(symbols[i].st_info),
+            strtab + symbols[i].st_name);
         }
     }
 
@@ -141,12 +147,12 @@ void parse_section_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Ehdr)*heade
         }       
         fseek(file, section_headers->sh_offset, SEEK_SET);
         fread(Section_names, section_headers->sh_size, 1, file);
-        
+        printf("Section Headers:\n");
         for(int idx =0; idx < header->e_shnum;++idx){
             const char *name= "";
             fseek(file,header->e_shoff+idx*sizeof(ElfW(Shdr)),SEEK_SET);
             name=Section_names+section_headers[idx].sh_name;
-            
+            printf("Section names:\n");
             printf("%i %s\n",idx,name);
         }
         free(Section_names);
@@ -166,14 +172,17 @@ void parse_symbol_and_sections_table(const char *elf_file) {
         perror("failed to read ELF header");
         exit(EXIT_FAILURE);
     }
+    fseek(file, elf_header.e_shoff, SEEK_SET);
 
     // read ALL section headers into array
+    fseek(file, elf_header.e_shoff+elf_header.e_shstrndx*elf_header.e_shentsize, SEEK_SET);
+
     ElfW(Shdr) *section_headers = malloc(sizeof(ElfW(Shdr)) * elf_header.e_shnum);
     if (!section_headers) {
         perror("malloc section headers");
         exit(EXIT_FAILURE);
     }
-    fseek(file, elf_header.e_shoff+elf_header.e_shstrndx*elf_header.e_shentsize, SEEK_SET);
+
     fread(section_headers,sizeof(ElfW(Shdr)),1, file);
 
   
