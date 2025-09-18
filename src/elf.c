@@ -141,13 +141,15 @@ void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *strin
 /*parse section table helper func*/
 void parse_section_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Ehdr)*header){
     //getting a segfault
-     char *Section_names=malloc(section_headers->sh_size);
+    //read string table
+    ElfW(Shdr) *string_table = &section_headers[header->e_shstrndx];
+     char *Section_names=malloc(string_table->sh_size);
         if(!Section_names){
             perror("unable to allocate memory");
             exit(EXIT_FAILURE);
         }       
-        fseek(file, section_headers->sh_offset, SEEK_SET);
-        fread(Section_names, section_headers->sh_size, 1, file);
+        fseek(file, string_table->sh_offset, SEEK_SET);
+        fread(Section_names, string_table->sh_size, 1, file);
         printf("Section Headers:\n");
         for(int idx =0; idx < header->e_shnum;++idx){
             const char *name= "";
@@ -176,7 +178,7 @@ void parse_symbol_and_sections_table(const char *elf_file) {
     fseek(file, elf_header.e_shoff, SEEK_SET);
 
     // read ALL section headers into array
-    fseek(file, elf_header.e_shoff+elf_header.e_shstrndx*elf_header.e_shentsize, SEEK_SET);
+    fseek(file, elf_header.e_shoff, SEEK_SET);
 
     ElfW(Shdr) *section_headers = malloc(sizeof(ElfW(Shdr)) * elf_header.e_shnum);
     if (!section_headers) {
@@ -184,7 +186,7 @@ void parse_symbol_and_sections_table(const char *elf_file) {
         exit(EXIT_FAILURE);
     }
 
-    fread(section_headers,sizeof(ElfW(Shdr)),1, file);
+    fread(section_headers,sizeof(ElfW(Shdr)),elf_header.e_shnum, file);
 
   
     parse_section_table(file, section_headers,&elf_header);
