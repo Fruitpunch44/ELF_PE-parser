@@ -18,7 +18,7 @@
 void print_elf_headers(const char* elf_file);
 void parse_text_section(const char* elf_file);
 void parse_symbol_and_sections_table(const char *elf_file) ;
-void parse_section_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr)*string_table,ElfW(Ehdr)*header);
+void parse_section_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Ehdr)*header);
 void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *string_table);
 const char *elf_machine_name(uint16_t machine_num);
 const char *elf_osabi_name(uint8_t osabi);
