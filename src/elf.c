@@ -129,6 +129,7 @@ void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *strin
             symbols[i].st_size,
             elf_sym_type(symbols[i].st_info),
             elf_bind_type(symbols[i].st_info),
+            symbols[i].st_shndx,
             strtab + symbols[i].st_name);
         }
     }
