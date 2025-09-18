@@ -21,6 +21,13 @@ const char *elf_bind_type(uint16_t bind_type){
     }
 
 }
+const char *Symbols_table_type(uint16_t sym_type){
+    switch(sym_type){
+        case SHT_DYNSYM: return "Dynamic Symbol Table";
+        case SHT_SYMTAB: return "Static Symbol Table";
+        default:         return "Unknown Symbol Table";
+    }
+}
 /*Retrun sym type*/
 const char *elf_sym_type(uint16_t sym_type){
     switch(sym_type){
@@ -99,14 +106,14 @@ void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *strin
     int num_syms = section_headers->sh_size / sizeof(ElfW(Sym));
 
     // Allocate space for symbols
-    ElfW(Sym) *symbols = malloc(section_headers->sh_size);
+    ElfW(Sym) *symbols = malloc(string_table->sh_size);
     if (!symbols) {
         perror("unable to allocate space for symbols");
         exit(EXIT_FAILURE);
     }
 
     // Read symbols
-    fseek(file, section_headers->sh_offset, SEEK_SET);
+    fseek(file, string_table->sh_offset, SEEK_SET);
     fread(symbols, sizeof(ElfW(Sym)), num_syms, file);
 
     // Allocate space for string table
@@ -121,14 +128,16 @@ void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *strin
     fread(strtab, string_table->sh_size, 1, file);
 
     // Print symbols
+    fprintf(stdout,"Symbol Table Type: %s\n",Symbols_table_type(section_headers->sh_type));
+    fprintf(stdout,"Num:    Value:      Size:       Type:    Bind:    NDX:   Name:\n");
     for (int i = 0; i < num_syms; i++) {
         if (symbols[i].st_name != 0) {
-            fprintf(stdout,"NUM: %d  Value: %8x  Size: %lu  Type: %s  Bind: %s  NDX:  %lu  Name:%s \n",
+            fprintf(stdout,"%-8d  %#.8x  %#.8x  %-8s  %-8s  %-8lu  %s\n",
             i,
             symbols[i].st_value,
             symbols[i].st_size,
-            elf_sym_type(symbols[i].st_info),
-            elf_bind_type(symbols[i].st_info),
+            elf_sym_type(ELF32_ST_TYPE(symbols[i].st_info)||ELF64_ST_TYPE(symbols[i].st_info)),
+            elf_bind_type(ELF32_ST_BIND(symbols[i].st_info)||ELF64_ST_BIND(symbols[i].st_info)),
             symbols[i].st_shndx,
             strtab + symbols[i].st_name);
         }
@@ -140,7 +149,6 @@ void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *strin
 
 /*parse section table helper func*/
 void parse_section_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Ehdr)*header){
-    //getting a segfault
     //read string table
     ElfW(Shdr) *string_table = &section_headers[header->e_shstrndx];
      char *Section_names=malloc(string_table->sh_size);
@@ -150,12 +158,11 @@ void parse_section_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Ehdr)*heade
         }       
         fseek(file, string_table->sh_offset, SEEK_SET);
         fread(Section_names, string_table->sh_size, 1, file);
-        printf("Section Headers:\n");
+        printf("Section Headers names:\n");
         for(int idx =0; idx < header->e_shnum;++idx){
             const char *name= "";
             fseek(file,header->e_shoff+idx*sizeof(ElfW(Shdr)),SEEK_SET);
             name=Section_names+section_headers[idx].sh_name;
-            printf("Section names:\n");
             printf("%i %s\n",idx,name);
         }
         free(Section_names);
