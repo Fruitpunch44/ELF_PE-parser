@@ -131,22 +131,21 @@ void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *strin
     free(strtab);
 }
 
-/*parse sext tabel helper func*/
-void parse_secton_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr)*string_table,ElfW(Ehdr)*header){
+/*parse section table helper func*/
+void parse_section_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Ehdr)*header){
+    //getting a segfault
      char *Section_names=malloc(section_headers->sh_size);
         if(!Section_names){
             perror("unable to allocate memory");
             exit(EXIT_FAILURE);
-        }
-        fseek(file,section_headers->sh_offset,SEEK_SET);
-        fread(Section_names,section_headers->sh_size,1,file);
+        }       
+        fseek(file, section_headers->sh_offset, SEEK_SET);
+        fread(Section_names, section_headers->sh_size, 1, file);
         
         for(int idx =0; idx < header->e_shnum;++idx){
             const char *name= "";
-            fseek(file,header->e_shoff+idx*sizeof(section_headers),SEEK_SET);
-            fread(&section_headers,sizeof(ElfW(Shdr)),1,file);
-
-            name=Section_names+section_headers->sh_name;
+            fseek(file,header->e_shoff+idx*sizeof(ElfW(Shdr)),SEEK_SET);
+            name=Section_names+section_headers[idx].sh_name;
             
             printf("%i %s\n",idx,name);
         }
@@ -155,7 +154,7 @@ void parse_secton_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr)*string
 
 /*return both the symbol and sections names*/
 void parse_symbol_and_sections_table(const char *elf_file) {
-    ElfW(Ehdr) header;
+    ElfW(Ehdr) elf_header;
     FILE *file = fopen(elf_file, "rb");
     if (!file) {
         perror("failed to open ELF file");
@@ -163,27 +162,25 @@ void parse_symbol_and_sections_table(const char *elf_file) {
     }
 
     // read ELF header
-    if (fread(&header, sizeof(header), 1, file) != 1) {
+    if (fread(&elf_header, sizeof(elf_header), 1, file) != 1) {
         perror("failed to read ELF header");
         exit(EXIT_FAILURE);
     }
 
     // read ALL section headers into array
-    ElfW(Shdr) *section_headers = malloc(header.e_shentsize * header.e_shnum);
+    ElfW(Shdr) *section_headers = malloc(sizeof(ElfW(Shdr)) * elf_header.e_shnum);
     if (!section_headers) {
         perror("malloc section headers");
         exit(EXIT_FAILURE);
     }
-    fseek(file, header.e_shoff, SEEK_SET);
-    fread(&section_headers, header.e_shentsize, header.e_shnum, file);
+    fseek(file, elf_header.e_shoff+elf_header.e_shstrndx*elf_header.e_shentsize, SEEK_SET);
+    fread(section_headers,sizeof(ElfW(Shdr)),1, file);
 
-    // load section header string table
-    ElfW(Shdr) *string_table = &section_headers[header.e_shstrndx];
-    //parse section names;
-    parse_secton_table(file,section_headers,string_table,&header);
+  
+    parse_section_table(file, section_headers,&elf_header);
 
     // loop through sections and parse symbol names
-    for (int i = 0; i < header.e_shnum; ++i) {
+    for (int i = 0; i < elf_header.e_shnum; ++i) {
         if (section_headers[i].sh_type == SHT_SYMTAB ||section_headers[i].sh_type == SHT_DYNSYM) {
             
             ElfW(Shdr) *symtab_hdr = &section_headers[i];
