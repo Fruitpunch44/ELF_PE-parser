@@ -311,13 +311,15 @@ void parse_text_section(const char* elf_file) {
     int text_section_index = (int)(text_section - section_headers);
 
     for (int i = 0; i < num_syms; i++) {
-        if (ELF_ST_TYPE(symbols[i].st_info) == STT_FUNC &&
+        if (ELF32_ST_TYPE(symbols[i].st_info) == STT_FUNC &&
+            ELF32_ST_BIND(symbols[i].st_info) == STB_GLOBAL &&
             symbols[i].st_shndx == text_section_index &&
             symbols[i].st_size > 0) {
 
             const char *func_name = strtab + symbols[i].st_name;
             size_t offset = symbols[i].st_value - text_section->sh_addr;
             size_t size = symbols[i].st_size;
+        
 
             printf("\nFunction: %s (size: %zu bytes)\n", func_name, size);
             for (size_t j = 0; j < size && offset + j < text_section->sh_size; j++) {
@@ -327,8 +329,6 @@ void parse_text_section(const char* elf_file) {
             printf("\n");
         }
     }
-
-    // Cleanup
     free(symbols);
     free(strtab);
     free(shstrtab);
