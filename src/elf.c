@@ -214,98 +214,129 @@ void parse_symbol_and_sections_table(const char *elf_file) {
     fclose(file);
 }
 
-
-void parse_text_section(const char* elf_file){
+void parse_text_section(const char* elf_file) {
     ElfW(Ehdr) elf_header;
-    FILE *file=fopen(elf_file,"rb");
-    if(!file){
-        perror("could not read the elf file");
-        exit(1);
-    
-    }
-    if(file){
-        //read header first
-        if (fread(&elf_header, sizeof(elf_header), 1, file) != 1) {
-            perror("failed to read ELF header");
-            exit(EXIT_FAILURE);
-        }
-        fseek(file,elf_header.e_shoff,SEEK_SET);
-
-        //read all section headers
-        ElfW(Shdr) *section_headers = malloc(elf_header.e_shnum * sizeof(ElfW(Shdr)));
-        if(!section_headers){
-            perror("unable to allocate memory");
-            exit(EXIT_FAILURE);
-        }
-        fread(section_headers, sizeof(ElfW(Shdr)), elf_header.e_shnum, file);
-
-        
-        // Read section header string table
-        ElfW(Shdr)section_header_string_table = section_headers[elf_header.e_shstrndx];
-        fseek(file, section_header_string_table.sh_offset, SEEK_SET);
-
-        
-        /*Read all string table*/
-        ElfW(Shdr)*Section_names =malloc(section_header_string_table.sh_size);
-        if(!Section_names){
-            perror("unable to allocate memory");
-            exit(EXIT_FAILURE);
-        }
-        fseek(file, section_header_string_table.sh_offset, SEEK_SET);
-        fread(Section_names, section_header_string_table.sh_size, 1, file);
-
-        /*read system table*/
-        ElfW(Sym) *Symbols=malloc(Section_names->sh_size);
-        if(!Symbols){
-        perror("error in allocating memory");
+    FILE *file = fopen(elf_file, "rb");
+    if (!file) {
+        perror("could not read the ELF file");
         exit(EXIT_FAILURE);
+    }
+
+    // Read ELF header
+    if (fread(&elf_header, sizeof(elf_header), 1, file) != 1) {
+        perror("failed to read ELF header");
+        exit(EXIT_FAILURE);
+    }
+
+    // Read section headers
+    fseek(file, elf_header.e_shoff, SEEK_SET);
+    ElfW(Shdr) *section_headers = malloc(sizeof(ElfW(Shdr)) * elf_header.e_shnum);
+    if (!section_headers) {
+        perror("unable to allocate memory for section headers");
+        exit(EXIT_FAILURE);
+    }
+    fread(section_headers, sizeof(ElfW(Shdr)), elf_header.e_shnum, file);
+
+    // Read section header string table
+    ElfW(Shdr) *shstrtab_hdr = &section_headers[elf_header.e_shstrndx];
+    char *shstrtab = malloc(shstrtab_hdr->sh_size);
+    if (!shstrtab) {
+        perror("unable to allocate memory for shstrtab");
+        exit(EXIT_FAILURE);
+    }
+    fseek(file, shstrtab_hdr->sh_offset, SEEK_SET);
+    fread(shstrtab, shstrtab_hdr->sh_size, 1, file);
+
+    // Locate .text, .symtab, .strtab
+    ElfW(Shdr) *text_section = NULL;
+    ElfW(Shdr) *symtab_hdr = NULL;
+    ElfW(Shdr) *strtab_hdr = NULL;
+    for (int i = 0; i < elf_header.e_shnum; i++) {
+        const char *section_name = shstrtab + section_headers[i].sh_name;
+        if (strcmp(section_name, ".text") == 0) {
+            text_section = &section_headers[i];
+        } else if (strcmp(section_name, ".symtab") == 0) {
+            symtab_hdr = &section_headers[i];
+        } else if (strcmp(section_name, ".strtab") == 0) {
+            strtab_hdr = &section_headers[i];
         }
-        int num_syms = section_headers->sh_size / sizeof(ElfW(Sym));
-        fseek(file, section_headers->sh_offset, SEEK_SET);
-        fread(Symbols, sizeof(ElfW(Sym)), num_syms, file);  
-       
-        for(int i = 0; i < elf_header.e_shnum; i++){
-            const char *name=Section_names[i].sh_name + section_headers[i].sh_name;
-            if (strcmp(name,".text")==0){
-                printf("Section .text at offset %lu, size %lu\n",
-               (unsigned long)section_headers[i].sh_offset,
-               (unsigned long)section_headers[i].sh_size);
+    }
+    if (!text_section) {
+        fprintf(stderr, ".text section not found\n");
+        exit(EXIT_FAILURE);
+    }
+    if (!symtab_hdr || !strtab_hdr) {
+        fprintf(stderr, "symbol table or string table not found\n");
+        exit(EXIT_FAILURE);
+    }
 
-               fseek(file,section_headers[i].sh_offset,SEEK_SET);
+    // Read .text section
+     char *text_data = malloc(text_section->sh_size);
+    if (!text_data) {
+        perror("unable to allocate memory for .text section");
+        exit(EXIT_FAILURE);
+    }
+    fseek(file, text_section->sh_offset, SEEK_SET);
+    fread(text_data, text_section->sh_size, 1, file);
 
+    // Dump .text section
+    printf(".text section (size: %lu bytes):\n", (unsigned long)text_section->sh_size);
+    for (size_t i = 0; i < text_section->sh_size; i++) {
+        if (i % 16 == 0) printf("\n%08zx  ", i);
+        printf("%02x ", text_data[i]);
+    }
+    printf("\n\n");
 
-               unsigned char *text=malloc(section_headers[i].sh_size);
-               if(!text){
-                perror("error in allocating memory");
-                exit(1);
-               }
-               
-               fread(text,section_headers[i].sh_size,1,file);
+    // Read symbols
+    int num_syms = symtab_hdr->sh_size / sizeof(ElfW(Sym));
+    ElfW(Sym) *symbols = malloc(symtab_hdr->sh_size);
+    if (!symbols) {
+        perror("unable to allocate memory for symbols");
+        exit(EXIT_FAILURE);
+    }
+    fseek(file, symtab_hdr->sh_offset, SEEK_SET);
+    fread(symbols, sizeof(ElfW(Sym)), num_syms, file);
 
-               /*read function symbols i am not too sure of how to */
-               parse_symbol_table(file, &section_headers[i], &section_headers[elf_header.e_shstrndx]);
-               for(int i=0;i<num_syms;i++){
-               if(Symbols[i].st_shndx == i && elf_sym_type(ELF32_ST_TYPE(Symbols[i].st_info)||ELF64_ST_TYPE(Symbols[i].st_info))==STT_FUNC){
-                printf("Function Symbol: %s\n", name);
-                printf("Machine Code at %s\n",name);
-                for (ssize_t j=0;j<section_headers[i].sh_size;j++){
-                    printf("%02x ",text[j]);
-                    if ((j+1) % 16 ==0){
-                        printf("\n");
-                    }
-                }
-                free(text);
-               }
-                else{
-                 printf("No function symbols found in .text section\n");
-                }
+    // Read symbol string table
+    char *strtab = malloc(strtab_hdr->sh_size);
+    if (!strtab) {
+        perror("unable to allocate memory for strtab");
+        exit(EXIT_FAILURE);
+    }
+    fseek(file, strtab_hdr->sh_offset, SEEK_SET);
+    fread(strtab, strtab_hdr->sh_size, 1, file);
+
+    // Dump functions in .text
+    printf("Functions in .text:\n");
+    int text_section_index = (int)(text_section - section_headers);
+
+    for (int i = 0; i < num_syms; i++) {
+        if (ELF_ST_TYPE(symbols[i].st_info) == STT_FUNC &&
+            symbols[i].st_shndx == text_section_index &&
+            symbols[i].st_size > 0) {
+
+            const char *func_name = strtab + symbols[i].st_name;
+            size_t offset = symbols[i].st_value - text_section->sh_addr;
+            size_t size = symbols[i].st_size;
+
+            printf("\nFunction: %s (size: %zu bytes)\n", func_name, size);
+            for (size_t j = 0; j < size && offset + j < text_section->sh_size; j++) {
+                if (j % 16 == 0) printf("\n%08zx  ", j);
+                printf("%02x ", text_data[offset + j]);
             }
+            printf("\n");
         }
-        free(section_headers);
-        free(Section_names);
-    } 
+    }
+
+    // Cleanup
+    free(symbols);
+    free(strtab);
+    free(shstrtab);
+    free(text_data);
+    free(section_headers);
+    fclose(file);
 }
-}
+
 
 void print_elf_headers(const char* elf_file){
     ElfW(Ehdr) header;
