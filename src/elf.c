@@ -106,14 +106,14 @@ void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *strin
     int num_syms = section_headers->sh_size / sizeof(ElfW(Sym));
 
     // Allocate space for symbols
-    ElfW(Sym) *symbols = malloc(string_table->sh_size);
+    ElfW(Sym) *symbols = malloc(section_headers->sh_size);
     if (!symbols) {
         perror("unable to allocate space for symbols");
         exit(EXIT_FAILURE);
     }
 
     // Read symbols
-    fseek(file, string_table->sh_offset, SEEK_SET);
+    fseek(file, section_headers->sh_offset, SEEK_SET);
     fread(symbols, sizeof(ElfW(Sym)), num_syms, file);
 
     // Allocate space for string table
@@ -282,8 +282,9 @@ void parse_text_section(const char* elf_file) {
     // Dump .text section
     printf(".text section (size: %lu bytes):\n", (unsigned long)text_section->sh_size);
     for (size_t i = 0; i < text_section->sh_size; i++) {
-        if (i % 16 == 0) printf("\n%08zx  ", i);
-        printf("%02x ", text_data[i]);
+        if (i % 16 == 0){ 
+            printf("\n%08lx  ", (unsigned long)i);}
+        printf("%02x ", (unsigned char)text_data[i]);
     }
     printf("\n\n");
 
@@ -308,12 +309,8 @@ void parse_text_section(const char* elf_file) {
 
     // Dump functions in .text
     printf("Functions in .text:\n");
-    int text_section_index = (int)(text_section - section_headers);
-
     for (int i = 0; i < num_syms; i++) {
         if (ELF32_ST_TYPE(symbols[i].st_info) == STT_FUNC &&
-            ELF32_ST_BIND(symbols[i].st_info) == STB_GLOBAL &&
-            symbols[i].st_shndx == text_section_index &&
             symbols[i].st_size > 0) {
 
             const char *func_name = strtab + symbols[i].st_name;
@@ -323,8 +320,10 @@ void parse_text_section(const char* elf_file) {
 
             printf("\nFunction: %s (size: %zu bytes)\n", func_name, size);
             for (size_t j = 0; j < size && offset + j < text_section->sh_size; j++) {
-                if (j % 16 == 0) printf("\n%08zx  ", j);
-                printf("%02x ", text_data[offset + j]);
+                if (j % 16 == 0){ 
+                    printf("\n%08lx  ", (unsigned long)(offset + j));
+                }
+                printf("%02x ", (unsigned char)text_data[offset + j]);
             }
             printf("\n");
         }
