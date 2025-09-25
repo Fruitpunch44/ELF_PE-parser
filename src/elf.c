@@ -214,7 +214,7 @@ void parse_symbol_and_sections_table(const char *elf_file) {
     fclose(file);
 }
 
-void parse_text_section(const char* elf_file) {
+void parse_section_machine_code(const char *elf_file,const char  *section_header_name) {
     ElfW(Ehdr) elf_header;
     FILE *file = fopen(elf_file, "rb");
     if (!file) {
@@ -227,9 +227,9 @@ void parse_text_section(const char* elf_file) {
         perror("failed to read ELF header");
         exit(EXIT_FAILURE);
     }
+    fseek(file, elf_header.e_shoff, SEEK_SET);
 
     // Read section headers
-    fseek(file, elf_header.e_shoff, SEEK_SET);
     ElfW(Shdr) *section_headers = malloc(sizeof(ElfW(Shdr)) * elf_header.e_shnum);
     if (!section_headers) {
         perror("unable to allocate memory for section headers");
@@ -253,7 +253,7 @@ void parse_text_section(const char* elf_file) {
     ElfW(Shdr) *strtab_hdr = NULL;
     for (int i = 0; i < elf_header.e_shnum; i++) {
         const char *section_name = shstrtab + section_headers[i].sh_name;
-        if (strcmp(section_name, ".text") == 0) {
+        if (strcmp(section_name, section_header_name) == 0) {
             text_section = &section_headers[i];
         } else if (strcmp(section_name, ".symtab") == 0) {
             symtab_hdr = &section_headers[i];
@@ -262,7 +262,7 @@ void parse_text_section(const char* elf_file) {
         }
     }
     if (!text_section) {
-        fprintf(stderr, ".text section not found\n");
+        fprintf(stderr, "%s section not found\n", section_header_name);
         exit(EXIT_FAILURE);
     }
     if (!symtab_hdr || !strtab_hdr) {
@@ -271,16 +271,16 @@ void parse_text_section(const char* elf_file) {
     }
 
     // Read .text section
-     char *text_data = malloc(text_section->sh_size);
+    char *text_data = malloc(text_section->sh_size);
     if (!text_data) {
-        perror("unable to allocate memory for .text section");
+        fprintf(stderr,"unable to allocate memory for %s section",section_header_name);
         exit(EXIT_FAILURE);
     }
     fseek(file, text_section->sh_offset, SEEK_SET);
     fread(text_data, text_section->sh_size, 1, file);
 
     // Dump .text section
-    printf(".text section (size: %lu bytes):\n", (unsigned long)text_section->sh_size);
+    printf("%s section (size: %lu bytes):\n", section_header_name,(unsigned long)text_section->sh_size);
     for (size_t i = 0; i < text_section->sh_size; i++) {
         if (i % 16 == 0){ 
             printf("\n%08lx  ", (unsigned long)i);}
@@ -308,10 +308,11 @@ void parse_text_section(const char* elf_file) {
     fread(strtab, strtab_hdr->sh_size, 1, file);
 
     // Dump functions in .text
-    printf("Functions in .text:\n");
+    printf("Functions in %s:\n",section_header_name);
     for (int i = 0; i < num_syms; i++) {
         if (ELF32_ST_TYPE(symbols[i].st_info) == STT_FUNC &&
             symbols[i].st_size > 0) {
+
 
             const char *func_name = strtab + symbols[i].st_name;
             size_t offset = symbols[i].st_value - text_section->sh_addr;
@@ -327,6 +328,7 @@ void parse_text_section(const char* elf_file) {
             }
             printf("\n");
         }
+
     }
     free(symbols);
     free(strtab);

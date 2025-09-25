@@ -16,7 +16,7 @@
 
 
 void print_elf_headers(const char* elf_file);
-void parse_text_section(const char* elf_file);
+void parse_section_machine_code(const char *elf_file,const char  *section_header_name);
 void parse_symbol_and_sections_table(const char *elf_file) ;
 void parse_section_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Ehdr)*header);
 void parse_symbol_table(FILE *file,ElfW(Shdr) *section_headers,ElfW(Shdr) *string_table);

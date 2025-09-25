@@ -4,6 +4,19 @@
 #include<unistd.h>
 #include "my_elf.h"
 
+/*
+const char *our_cli_program = "MY_Elf_Parser";
+static char doc[]=
+"SOMETTEST"
+static char args_doc[]="ARGS1 ARGS2";
+
+static struct arg_options[]=
+{
+{"Print Headers", "P",0 ,0, "Print out sections of the elf headers"},
+{"Print Text section","T",0,0,""}
+}
+*/
+
 void print_usage(const char* program_name) {
     fprintf(stderr, "Usage: %s [-PTSA] [FILE]\n", program_name);
     fprintf(stderr, "Options:\n");
@@ -16,10 +29,12 @@ void print_usage(const char* program_name) {
 int main(int argc, char* argv[]){
     int option;
     if(argc<3){
-       print_usage(argv[0]);
+        fprintf(stderr, "Not enough arguments provided.\n");
+        print_usage(argv[0]);
         exit(EXIT_FAILURE);
     }
     char *file_name=argv[2];
+    char *section_name = argv[3];
 
     //parse command line args,man i miss python wtf is this
     //LINUX specific
@@ -31,7 +46,7 @@ int main(int argc, char* argv[]){
                 break;
 
             case 'T': 
-                parse_text_section(file_name);
+                parse_section_machine_code(file_name,section_name);
                 break;
             
 
@@ -42,7 +57,7 @@ int main(int argc, char* argv[]){
             case 'A':
                 print_elf_headers(file_name);
                 parse_symbol_and_sections_table(file_name);
-                parse_text_section(file_name);
+                parse_section_machine_code(file_name,section_name);
                 break;
         }
   
