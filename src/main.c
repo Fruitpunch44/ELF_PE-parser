@@ -13,7 +13,7 @@ static char args_doc[]="ARGS1 ARGS2";
 static struct arg_options[]=
 {
 {"Print Headers", "P",0 ,0, "Print out sections of the elf headers"},
-{"Print Text section","T",0,0,""}
+{"Print section hexdump","T",0,0,""}
 }
 */
 
