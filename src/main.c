@@ -17,13 +17,23 @@ static struct arg_options[]=
 }
 */
 
-void print_usage(const char* program_name) {
+void print_usage_linux(const char *program_name) {
     fprintf(stderr, "Usage: %s [-PTSA] [FILE]\n", program_name);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -P    Print ELF headers\n");
     fprintf(stderr, "  -T    Parse text section\n");
     fprintf(stderr, "  -S    Parse section table\n");
     fprintf(stderr, "  -A    All of the above\n");
+}
+void print_usage_windows(const char *program_name){
+    fprintf(stderr, "Usage: %s [-ND] [FILE]\n", program_name);
+    fprintf(stderr, "Options:\n");
+    fprintf(stderr, "  -D    Print DOS headers\n");
+    fprintf(stderr, "  -I    Print image headers\n");
+    fprintf(stderr, "  -F    Parse file headers\n");
+    fprintf(stderr, "  -O    parse optional headers\n");
+    fprintf(stderr, "  -S    Parse dection header\n");
+    fprintf(stderr, "  -L    Parse Dll immports\n");
 }
 
 int main(int argc, char* argv[]){
