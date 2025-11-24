@@ -35,7 +35,6 @@ void print_usage_windows(const char *program_name){
     fprintf(stderr, "  -S    Parse dection header\n");
     fprintf(stderr, "  -L    Parse Dll immports\n");
 }
-
 int main(int argc, char* argv[]){
     int option;
     if(argc<3){
@@ -48,29 +47,32 @@ int main(int argc, char* argv[]){
 
     //parse command line args,man i miss python wtf is this
     //LINUX specific
-    while((option = getopt(argc,argv,"PTSA"))!=-1){
-        switch(option){
+    #ifdef __linux__
+        fprintf(stdout,"You are on windows");
+        while((option = getopt(argc,argv,"PTSA"))!=-1){
+            switch(option){
 
-            case 'P':
-                print_elf_headers(file_name);
-                break;
+                case 'P':
+                    print_elf_headers(file_name);
+                    break;
 
-            case 'T': 
-                parse_section_machine_code(file_name,section_name);
-                break;
-            
+                case 'T': 
+                    parse_section_machine_code(file_name,section_name);
+                    break;
+                
 
-            case 'S':
-                parse_symbol_and_sections_table(file_name);
-                break;
+                case 'S':
+                    parse_symbol_and_sections_table(file_name);
+                    break;
 
-            case 'A':
-                print_elf_headers(file_name);
-                parse_symbol_and_sections_table(file_name);
-                parse_section_machine_code(file_name,section_name);
-                break;
-        }
-  
-    }    
-    return 0;
+                case 'A':
+                    print_elf_headers(file_name);
+                    parse_symbol_and_sections_table(file_name);
+                    parse_section_machine_code(file_name,section_name);
+                    break;
+            }
+    
+        }    
+        return 0;
+    #endif
 }
