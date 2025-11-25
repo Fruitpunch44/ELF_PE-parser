@@ -10,6 +10,8 @@ const char *PE_type(DWORD type){
 }
 
 const char *machine_type(WORD type){
+    /*not all of em use something like cff explorer to get the other
+    machine types*/
     switch(type){
         case 0x8664: return "AMD64";
         case 0x014c: return "Intel 386";
@@ -20,12 +22,40 @@ const char *machine_type(WORD type){
 
     }
 }
-void print_dos();
-void print_image();
-void parse_file_headers();
-void parse_optional_heders();
-void parse_section_headers();
-void parse_imports();
+
+
+void print_FILE_HEADERS(IMAGE_NT_HEADERS* HEADER){
+    fprintf(stdout,"----FILE_HEADERS-----\n");
+    fprintf(stdout,"Machine : %s\n",machine_type(HEADER->FileHeader.Machine));
+    fprintf(stdout,"Number of sections : 0x%x\n",HEADER->FileHeader.NumberOfSections);
+    fprintf(stdout,"Pointer to symbol table : 0x%x\n",HEADER->FileHeader.PointerToSymbolTable);
+    fprintf(stdout,"Number of symbols : 0x%x\n",HEADER->FileHeader.NumberOfSymbols);
+    fprintf(stdout,"Size of optional header: 0x%x\n",HEADER->FileHeader.SizeOfOptionalHeader);
+}
+
+void parse_optional_heders(IMAGE_NT_HEADERS* HEADER){
+    fprintf(stdout,"----OPTIONAL_HEADERS-----\n");
+    fprintf(stdout,"Magic : %s\n",PE_type(HEADER->OptionalHeader.Magic));
+    fprintf(stdout,"Address of entry point : 0x%x\n",HEADER->OptionalHeader.AddressOfEntryPoint);
+    fprintf(stdout,"Image base : 0x%lx\n",HEADER->OptionalHeader.ImageBase);
+    fprintf(stdout,"Section alignment : 0x%x\n",HEADER->OptionalHeader.SectionAlignment);
+    fprintf(stdout,"File alignment : 0x%x\n",HEADER->OptionalHeader.FileAlignment);
+    fprintf(stdout,"Size of image : 0x%x\n",HEADER->OptionalHeader.SizeOfImage);
+    fprintf(stdout,"Size of headers : 0x%x\n",HEADER->OptionalHeader.SizeOfHeaders); 
+}
+void print_data(IMAGE_DOS_HEADER* DOS_HEADER,IMAGE_NT_HEADERS* NT_HEADER){
+    print_dos(DOS_HEADER);
+    print_FILE_HEADERS(NT_HEADER);
+    parse_optional_heders(NT_HEADER);
+    parse_section_headers(NT_HEADER);
+
+}
+void parse_section_headers(IMAGE_NT_HEADERS *NT){
+    fprintf(stdout,"----SECTION_HEADERS-----\n");
+    for(int i = 0; NT->FileHeader.NumberOfSections;i++){
+        //TO DO I'M LAZY
+    }
+}
 
 
 void *load_pe (char *PE_DATA,const char* FILE_NAME){
@@ -38,7 +68,10 @@ void *load_pe (char *PE_DATA,const char* FILE_NAME){
     }
     fprintf(stdout,"%s has a valid DOS Signature",FILE_NAME);
     print_data(my_DOS_HEADER,my_NT_HEADER);
-    return ;
+    return NULL;
+
+    DWORD sectionLocation;
+
 }
 void load_exe_file(const char *file_path){
     FILE *exe_file;

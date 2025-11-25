@@ -46,9 +46,9 @@ int main(int argc, char* argv[]){
     char *section_name = argv[3];
 
     //parse command line args,man i miss python wtf is this
-    //LINUX specific
+    //check if on linux
     #ifdef __linux__
-        fprintf(stdout,"You are on windows");
+        fprintf(stdout,"You are on linux");
         while((option = getopt(argc,argv,"PTSA"))!=-1){
             switch(option){
 
@@ -71,8 +71,35 @@ int main(int argc, char* argv[]){
                     parse_section_machine_code(file_name,section_name);
                     break;
             }
-    
+            return 0;
         }    
-        return 0;
+    #elif
+        //check if on windows
+        #if defined(_WIN32) || defined(_WIN64)
+             fprintf(stdout,"You are on Windows");
+             while((option =getopt(agrc,argv,"DIFOSL"))!=-1){
+                switch(option){
+                    case 'D':
+                        break;
+                    case 'I':
+                        break;
+                    case 'F':
+                        break;
+                    case 'O':
+                        break;
+                    case 'S':
+                        break;
+                    case 'L':
+                        break;
+                }
+             }
+             return 0;
+
+        #endif
+    #else
+        fprintf(stderr,"Unsupported OS");
+        exit(EXIT_FAILURE);
     #endif
+
+
 }
