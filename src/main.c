@@ -3,6 +3,7 @@
 #include<string.h>
 #include<unistd.h>
 #include "my_elf.h"
+#include "PE.h"
 
 /*
 const char *our_cli_program = "MY_Elf_Parser";
@@ -29,7 +30,6 @@ void print_usage_windows(const char *program_name){
     fprintf(stderr, "Usage: %s [-ND] [FILE]\n", program_name);
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -D    Print DOS headers\n");
-    fprintf(stderr, "  -I    Print image headers\n");
     fprintf(stderr, "  -F    Parse file headers\n");
     fprintf(stderr, "  -O    parse optional headers\n");
     fprintf(stderr, "  -S    Parse dection header\n");
@@ -80,6 +80,7 @@ int main(int argc, char* argv[]){
              while((option =getopt(agrc,argv,"DIFOSL"))!=-1){
                 switch(option){
                     case 'D':
+            
                         break;
                     case 'I':
                         break;

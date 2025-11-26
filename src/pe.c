@@ -51,12 +51,29 @@ void print_data(IMAGE_DOS_HEADER* DOS_HEADER,IMAGE_NT_HEADERS* NT_HEADER){
 
 }
 void parse_section_headers(IMAGE_NT_HEADERS *NT){
-    fprintf(stdout,"----SECTION_HEADERS-----\n");
+    IMAGE_SECTION_HEADER* section_names=(IMAGE_NT_HEADERS*)(NT+1);
+    fprintf(stdout,"----SECTIONS----\n");
+    fprintf(stdout,"%-10s%-10s%-10s%-10s\n","NAME","RAWSIZE","VIRTUAL ADDRESS","CHARACTERISTICS");
     for(int i = 0; NT->FileHeader.NumberOfSections;i++){
-        //TO DO I'M LAZY
+        fprintf(stdout,"%-10s%-10#x%-10#x%-10#x\n",section_names[i].Name,section_names[i].SizeOfRawData,section_names[i].VirtualAddress,section_names[i].Characteristics);
+        fprintf(stdout,"\n");
     }
 }
-
+void parse_dos_header(IMAGE_DOS_HEADER *Dos_header){
+    fprintf(stdout,"----DOS_HEADER-----\n");
+    fprintf(stdout,"e_magic : 0x%x\n",Dos_header->e_magic);
+    fprintf(stdout,"e_cblp : 0x%x\n",Dos_header->e_cblp);
+    fprintf(stdout,"e_cp : 0x%x\n",Dos_header->e_cp);
+    fprintf(stdout,"e_crlc : 0x%x\n",Dos_header->e_crlc);
+    fprintf(stdout,"e_cparhdr : 0x%x\n",Dos_header->e_cparhdr);
+    fprintf(stdout,"e_minalloc : 0x%x\n",Dos_header->e_minalloc);
+    fprintf(stdout,"e_maxalloc : 0x%x\n",Dos_header->e_maxalloc);
+    fprintf(stdout,"e_ss : 0x%x\n",Dos_header->e_ss);
+    fprintf(stdout,"e_sp : 0x%x\n",Dos_header->e_sp);
+    fprintf(stdout,"e_lfarlc : 0x%x\n",Dos_header->e_lfarlc);
+    fprintf(stdout,"e_ovno : 0x%x\n",Dos_header->e_ovno);
+    fprintf(stdout,"e_lfanew : 0x%x\n",Dos_header->e_lfanew);
+}
 
 void *load_pe (char *PE_DATA,const char* FILE_NAME){
     IMAGE_DOS_HEADER* my_DOS_HEADER = (IMAGE_DOS_HEADER*)PE_DATA;
