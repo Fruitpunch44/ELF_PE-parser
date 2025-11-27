@@ -44,18 +44,18 @@ void parse_optional_heders(IMAGE_NT_HEADERS* HEADER){
     fprintf(stdout,"Size of headers : 0x%x\n",HEADER->OptionalHeader.SizeOfHeaders); 
 }
 void print_data(IMAGE_DOS_HEADER* DOS_HEADER,IMAGE_NT_HEADERS* NT_HEADER){
-    print_dos(DOS_HEADER);
+    parse_dos_header(DOS_HEADER);
     print_FILE_HEADERS(NT_HEADER);
     parse_optional_heders(NT_HEADER);
-    parse_section_headers(NT_HEADER);
 
 }
 void parse_section_headers(IMAGE_NT_HEADERS *NT){
-    IMAGE_SECTION_HEADER* section_names=(IMAGE_NT_HEADERS*)(NT+1);
+    IMAGE_SECTION_HEADER* section_names=(IMAGE_SECTION_HEADER*)(NT+1);
     fprintf(stdout,"----SECTIONS----\n");
     fprintf(stdout,"%-10s%-10s%-10s%-10s\n","NAME","RAWSIZE","VIRTUAL ADDRESS","CHARACTERISTICS");
     for(int i = 0; NT->FileHeader.NumberOfSections;i++){
-        fprintf(stdout,"%-10s%-10#x%-10#x%-10#x\n",section_names[i].Name,section_names[i].SizeOfRawData,section_names[i].VirtualAddress,section_names[i].Characteristics);
+        fprintf(stdout,"%-10s%-10#x%-10#x%-10#x\n",section_names[i].Name,section_names[i].SizeOfRawData,
+                section_names[i].VirtualAddress,section_names[i].Characteristics);
         fprintf(stdout,"\n");
     }
 }
@@ -80,21 +80,20 @@ void *load_pe (char *PE_DATA,const char* FILE_NAME){
     IMAGE_NT_HEADERS* my_NT_HEADER = (IMAGE_NT_HEADERS*)(((char*)my_DOS_HEADER) + my_DOS_HEADER->e_lfanew);
     //
     if(my_DOS_HEADER->e_magic!=IMAGE_DOS_SIGNATURE){
-        fprintf(stderr,"invalid Dos Signature ");
+        fprintf(stderr,"invalid Dos Signature\n");
         return NULL;
     }
-    fprintf(stdout,"%s has a valid DOS Signature",FILE_NAME);
+    fprintf(stdout,"%s has a valid DOS Signature\n",FILE_NAME);
     print_data(my_DOS_HEADER,my_NT_HEADER);
-    return NULL;
 
-    DWORD sectionLocation;
+    return NULL;
 
 }
 void load_exe_file(const char *file_path){
     FILE *exe_file;
     exe_file=fopen(file_path,"rb");
     if(!exe_file){
-        fprintf(stderr,"unable to read file");
+        fprintf(stderr,"unable to read file\n");
         exit(EXIT_FAILURE);
     }
     fseek(exe_file,0L,SEEK_END);

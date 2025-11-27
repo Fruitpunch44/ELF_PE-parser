@@ -29,18 +29,22 @@ void print_usage_linux(const char *program_name) {
 void print_usage_windows(const char *program_name){
     fprintf(stderr, "Usage: %s [-ND] [FILE]\n", program_name);
     fprintf(stderr, "Options:\n");
-    fprintf(stderr, "  -D    Print DOS headers\n");
-    fprintf(stderr, "  -F    Parse file headers\n");
-    fprintf(stderr, "  -O    parse optional headers\n");
-    fprintf(stderr, "  -S    Parse dection header\n");
-    fprintf(stderr, "  -L    Parse Dll immports\n");
+    fprintf(stderr, "  -A    Parse PE Data\n");;
 }
 int main(int argc, char* argv[]){
     int option;
     if(argc<3){
         fprintf(stderr, "Not enough arguments provided.\n");
-        print_usage(argv[0]);
-        exit(EXIT_FAILURE);
+        #ifdef __linux__
+            fprintf(stdout,"LINUX\n");
+            print_usage_linux(argv[0]);
+        #elif defined(_WIN32) || defined(_WIN64)
+             fprintf(stdout,"WINDOWS\n");
+             print_usage_windows(argv[0]);
+        #else
+            fprintf(stdout,"no platform\n");
+            exit(EXIT_FAILURE);
+        #endif
     }
     char *file_name=argv[2];
     char *section_name = argv[3];
@@ -73,32 +77,19 @@ int main(int argc, char* argv[]){
             }
             return 0;
         }    
-    #elif
+    #elif defined(_WIN32) || defined(_WIN64)
         //check if on windows
-        #if defined(_WIN32) || defined(_WIN64)
-             fprintf(stdout,"You are on Windows");
-             while((option =getopt(agrc,argv,"DIFOSL"))!=-1){
-                switch(option){
-                    case 'D':
-            
-                        break;
-                    case 'I':
-                        break;
-                    case 'F':
-                        break;
-                    case 'O':
-                        break;
-                    case 'S':
-                        break;
-                    case 'L':
-                        break;
-                }
-             }
-             return 0;
-
-        #endif
+        fprintf(stdout,"You are on Windows\n");
+        while((option=getopt(argc,argv,"A"))!=-1){
+            switch(option){
+                case 'A':
+                load_exe_file(file_name);
+                break;
+            }
+            return 0;
+        }
     #else
-        fprintf(stderr,"Unsupported OS");
+        fprintf(stderr,"Unsupported OS\n");
         exit(EXIT_FAILURE);
     #endif
 
